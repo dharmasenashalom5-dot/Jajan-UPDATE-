@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Titip Jajanan & Minuman</title>
+    <style>
+        * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background-color: #f4f7f6; margin: 0; padding: 20px; color: #333; }
+        .container { max-width: 550px; margin: 0 auto; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        
+        /* Navigasi */
+        .nav-buttons { display: flex; gap: 10px; margin-bottom: 20px; }
+        .nav-buttons button { flex: 1; padding: 10px; border: none; background: #e0e0e0; cursor: pointer; border-radius: 6px; font-weight: bold; }
+        .nav-buttons button.active { background: #4CAF50; color: white; }
+        
+        .page { display: none; }
+        .page.active { display: block; }
+        
+        h2, h3 { margin-top: 0; text-align: center; color: #2e7d32; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: 600; }
+        input[type="text"], input[type="password"] { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px; }
+        .radio-group { display: flex; flex-direction: column; gap: 8px; margin-top: 5px; }
+        .radio-option { display: flex; align-items: center; gap: 8px; }
+
+        button.btn-submit { width: 100%; padding: 12px; background: #4CAF50; color: white; border: none; border-radius: 6px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 10px; }
+        button.btn-submit:hover { background: #45a049; }
+
+        /* Style Tabel History Teman */
+        .history-section { margin-top: 30px; border-top: 2px dashed #ddd; padding-top: 20px; }
+        .order-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 14px; }
+        .order-table th, .order-table td { padding: 10px; text-align: left; border-bottom: 1px solid #ddd; }
+        .order-table th { background-color: #f2f2f2; }
+        
+        /* Badge Status */
+        .badge { padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: bold; display: inline-block; }
+        .badge-pending { background-color: #ffe0b2; color: #e65100; }
+        .badge-done { background-color: #c8e6c9; color: #2e7d32; }
+
+        /* Style Halaman Admin (Kamu) */
+        .order-card { background: #f9f9f9; border-left: 5px solid #4CAF50; padding: 12px; margin-bottom: 10px; border-radius: 4px; display: flex; justify-content: space-between; align-items: center; }
+        .order-card.done { border-left-color: #9e9e9e; background: #eee; }
+        .order-info h4 { margin: 0 0 5px 0; font-size: 16px; }
+        .order-info p { margin: 0; font-size: 13px; color: #555; }
+        
+        .btn-done { background: #2196F3; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; }
+        .btn-done.is-done { background: #757575; }
+        .btn-clear { background: #f44336; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; margin-bottom: 15px; float: right; }
+        
+        /* Modal Lock PIN */
+        #pinContainer { text-align: center; padding: 20px 0; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <!-- Navigasi Tab -->
+    <div class="nav-buttons">
+        <button id="btn-user-tab" class="active" onclick="switchTab('user-page')">Form Titip & History</button>
+        <button id="btn-admin-tab" onclick="switchTab('admin-page')">Halaman Aku 🔒</button>
+    </div>
+
+    <!-- HALAMAN 1: FORM TITIP & RIWAYAT (TEMAN-TEMAN) -->
+    <div id="user-page" class="page active">
+        <h2>Mau Titip Apa? 🥤</h2>
+        <form id="orderForm">
+            <div class="form-group">
+                <label for="nama">Nama Kamu:</label>
+                <input type="text" id="nama" placeholder="Masukkan nama kamu..." required>
+            </div>
+
+            <div class="form-group">
+                <label>Pilih Pesanan:</label>
+                <div class="radio-group">
+                    <label class="radio-option">
+                        <input type="radio" name="pilihan" value="Air Putih Dingin" required onclick="toggleKopiInput(false)"> Air Putih Dingin
+                    </label>
+                    <label class="radio-option">
+                        <input type="radio" name="pilihan" value="Air Putih Biasa" onclick="toggleKopiInput(false)"> Air Putih Biasa
+                    </label>
+                    <label class="radio-option">
+                        <input type="radio" name="pilihan" value="Es Teh" onclick="toggleKopiInput(false)"> Es Teh
+                    </label>
+                    <label class="radio-option">
+                        <input type="radio" name="pilihan" value="Kopi" id="radioKopi" onclick="toggleKopiInput(true)"> Kopi (Isi Merk/Jenis)
+                    </label>
+                </div>
+            </div>
+
+            <!-- Input tambahan jika pilih Kopi -->
+            <div class="form-group" id="kopiDetailGroup" style="display: none;">
+                <label for="detailKopi">Kopi Apa yang Kamu Mau?</label>
+                <input type="text" id="detailKopi" placeholder="Contoh: Good Day / Kopi Kenangan / Janji Jiwa">
+            </div>
+
+            <div class="form-group">
+                <label for="catatan">Catatan Tambahan (Opsional):</label>
+                <input type="text" id="catatan" placeholder="Contoh: Esnya dikit aja / Gulanya 50%">
+            </div>
+
+            <button type="submit" class="btn-submit">Kirim Titipan 🚀</button>
+        </form>
+
+        <!-- LIVE HISTORY PESANAN UNTUK TEMAN -->
+        <div class="history-section">
+            <h3>📋 Status Titipan Terkini</h3>
+            <table class="order-table">
+                <thead>
+                    <tr>
+                        <th>Nama</th>
+                        <th>Pesanan</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody id="userHistoryBody">
+                    <!-- Data otomatis terisi dari script -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- HALAMAN 2: REKAPAN KASIR (KHUSUS KAMU DENGAN PIN) -->
+    <div id="admin-page" class="page">
+        <!-- Form Kunci PIN -->
+        <div id="pinContainer">
+            <h2>Halaman Khusus 🔒</h2>
+            <p>Masukkan PIN untuk melihat & memproses daftar pesanan:</p>
+            <div class="form-group" style="max-width: 250px; margin: 0 auto 15px auto;">
+                <input type="password" id="pinInput" placeholder="Masukkan 6 Digit PIN" maxlength="6">
+            </div>
+            <button onclick="verifikasiPin()" class="btn-submit" style="width: auto; padding: 10px 25px;">Buka Rekapan</button>
+        </div>
+
+        <!-- Konten Rekapan (Tersembunyi Sebelum PIN Benar) -->
+        <div id="adminContent" style="display: none;">
+            <h2>Daftar Pesanan Masuk 📝</h2>
+            <button class="btn-clear" onclick="hapusSemua()">Hapus Semua Pesanan</button>
+            <div style="clear: both;"></div>
+            <div id="daftarPesananAdmin">
+                <!-- List pesanan admin -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const SECRET_PIN = "302010";
+    let isAdminUnlocked = false;
+
+    // Load history otomatis saat web dibuka
+    document.addEventListener('DOMContentLoaded', () => {
+        renderUserHistory();
+    });
+
+    // Pindah Tab Navigasi
+    function switchTab(pageId) {
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.querySelectorAll('.nav-buttons button').forEach(b => b.classList.remove('active'));
+        
+        document.getElementById(pageId).classList.add('active');
+        
+        if (pageId === 'user-page') {
+            document.getElementById('btn-user-tab').classList.add('active');
+            renderUserHistory();
+        } else if (pageId === 'admin-page') {
+            document.getElementById('btn-admin-tab').classList.add('active');
+            if (isAdminUnlocked) {
+                renderAdminOrders();
+            }
+        }
+    }
+
+    // Tampilkan/Sembunyikan kolom Kopi
+    function toggleKopiInput(show) {
+        const kopiGroup = document.getElementById('kopiDetailGroup');
+        const kopiInput = document.getElementById('detailKopi');
+        if (show) {
+            kopiGroup.style.display = 'block';
+            kopiInput.required = true;
+        } else {
+            kopiGroup.style.display = 'none';
+            kopiInput.required = false;
+            kopiInput.value = '';
+        }
+    }
+
+    // Verifikasi PIN Admin
+    function verifikasiPin() {
+        const inputPin = document.getElementById('pinInput').value;
+        if (inputPin === SECRET_PIN) {
+            isAdminUnlocked = true;
+            document.getElementById('pinContainer').style.display = 'none';
+            document.getElementById('adminContent').style.display = 'block';
+            document.getElementById('pinInput').value = '';
+            renderAdminOrders();
+        } else {
+            alert('PIN Salah! Kamu tidak memiliki akses.');
+            document.getElementById('pinInput').value = '';
+        }
+    }
+
+    // Submit Form Titipan Teman
+    document.getElementById('orderForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const nama = document.getElementById('nama').value.trim();
+        const pilihanRadio = document.querySelector('input[name="pilihan"]:checked').value;
+        const detailKopi = document.getElementById('detailKopi').value.trim();
+        const catatan = document.getElementById('catatan').value.trim();
+
+        let pesananFinal = pilihanRadio;
+        if (pilihanRadio === 'Kopi' && detailKopi !== '') {
+            pesananFinal = `Kopi (${detailKopi})`;
+        }
+
+        const orderData = {
+            id: Date.now(),
+            nama: nama,
+            pesanan: pesananFinal,
+            catatan: catatan || '-',
+            selesai: false
+        };
+
+        let orders = JSON.parse(localStorage.getItem('titip_jajanan_db')) || [];
+        orders.push(orderData);
+        localStorage.setItem('titip_jajanan_db', JSON.stringify(orders));
+
+        alert('Pesanan berhasil ditambahkan!');
+        this.reset();
+        toggleKopiInput(false);
+        renderUserHistory();
+    });
+
+    // Render Tabel History untuk Teman (Halaman 1)
+    function renderUserHistory() {
+        const tbody = document.getElementById('userHistoryBody');
+        let orders = JSON.parse(localStorage.getItem('titip_jajanan_db')) || [];
+
+        if (orders.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; color:#888;">Belum ada yang titip pesanan.</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = '';
+        orders.forEach(item => {
+            const tr = document.createElement('tr');
+            
+            const statusBadge = item.selesai 
+                ? '<span class="badge badge-done">Sudah Dibeli ✅</span>' 
+                : '<span class="badge badge-pending">Menunggu ⏳</span>';
+
+            tr.innerHTML = `
+                <td><strong>${item.nama}</strong></td>
+                <td>${item.pesanan} <br><small style="color:#666;">Note: ${item.catatan}</small></td>
+                <td>${statusBadge}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    // Render List Pesanan di Halaman Admin (Halaman 2)
+    function renderAdminOrders() {
+        const listContainer = document.getElementById('daftarPesananAdmin');
+        let orders = JSON.parse(localStorage.getItem('titip_jajanan_db')) || [];
+
+        if (orders.length === 0) {
+            listContainer.innerHTML = '<p style="text-align: center; color: #888;">Tidak ada pesanan masuk.</p>';
+            return;
+        }
+
+        listContainer.innerHTML = '';
+        orders.forEach((item, index) => {
+            const card = document.createElement('div');
+            card.className = `order-card ${item.selesai ? 'done' : ''}`;
+            card.innerHTML = `
+                <div class="order-info">
+                    <h4>${item.nama} - <strong>${item.pesanan}</strong></h4>
+                    <p>Catatan: ${item.catatan}</p>
+                </div>
+                <button class="btn-done ${item.selesai ? 'is-done' : ''}" onclick="toggleSelesai(${index})">
+                    ${item.selesai ? 'Batal' : 'Tandai Selesai'}
+                </button>
+            `;
+            listContainer.appendChild(card);
+        });
+    }
+
+    // Tandai status pesanan (Bisa diklik selesai/batal oleh kamu)
+    function toggleSelesai(index) {
+        let orders = JSON.parse(localStorage.getItem('titip_jajanan_db'));
+        orders[index].selesai = !orders[index].selesai;
+        localStorage.setItem('titip_jajanan_db', JSON.stringify(orders));
+        renderAdminOrders();
+        renderUserHistory(); // Otomatis ter-update untuk halaman teman
+    }
+
+    // Hapus Semua Data
+    function hapusSemua() {
+        if (confirm('Yakin mau menghapus semua daftar pesanan?')) {
+            localStorage.removeItem('titip_jajanan_db');
+            renderAdminOrders();
+            renderUserHistory();
+        }
+    }
+</script>
+
+</body>
+</html>
